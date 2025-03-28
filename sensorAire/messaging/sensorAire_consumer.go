@@ -11,7 +11,6 @@ import (
 	"Xilonen-2/sensorAire/models"
 )
 
-// Umbrales de calidad del aire
 const (
 	UMBRAL_BUENO     = 100.0
 	UMBRAL_MODERADO  = 200.0
@@ -56,7 +55,7 @@ func StartConsumer() {
 
 	go func() {
 		for msg := range msgs {
-			var sensorData models.SensorData
+			var sensorData models.CalidadAire
 			if err := json.Unmarshal(msg.Body, &sensorData); err != nil {
 				log.Printf("⚠️ Error al deserializar el mensaje: %v", err)
 				continue
@@ -69,7 +68,7 @@ func StartConsumer() {
 				categoria = "Moderado"
 			}
 
-			datoProcesado := models.SensorDataProcesado{
+			datoProcesado := models.CalidadAireProcesado{
 				Valor:     sensorData.Valor,
 				Categoria: categoria,
 				Timestamp: time.Now().Format("2006-01-02 15:04:05"),
