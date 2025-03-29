@@ -4,12 +4,14 @@ import (
 	"log"
 	aire "Xilonen-2/sensorAire/messaging"
 	humedad "Xilonen-2/sensorHumedad/messaging"
+	nivelAgua "Xilonen-2/sensorNivelAgua/messaging"
 )
 
 func main() {
 	log.Println("🚀 Iniciando consumidor de datos...")
 	go aire.StartConsumer()
 	go humedad.StartHumedadConsumer()
+	go nivelAgua.StartNivelAguaConsumer()
 
 	select {}
 }
