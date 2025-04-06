@@ -6,6 +6,7 @@ import (
 	humedad "Xilonen-2/sensorHumedad/messaging"
 	nivelAgua "Xilonen-2/sensorNivelAgua/messaging"
 	sensorUV "Xilonen-2/sensorUV/messaging"
+	sensorTemperatura "Xilonen-2/sensorTemperatura/messaging"
 )
 
 func main() {
@@ -14,6 +15,7 @@ func main() {
 	go humedad.StartHumedadConsumer()
 	go nivelAgua.StartNivelAguaConsumer()
 	go sensorUV.StartUVConsumer()
+	go sensorTemperatura.StartTemperaturaConsumer()
 
 	select {}
 }
