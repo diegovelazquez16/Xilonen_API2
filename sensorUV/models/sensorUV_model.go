@@ -1,10 +1,10 @@
 package models
 
-type CalidadAire struct {
+type LuzUV struct {
 	Valor float64 `json:"valor"`
 }
 
-type CalidadAireProcesado struct {
+type LuzUVProcesada struct {
 	Valor     float64 `json:"valor"`
 	Categoria string  `json:"categoria"`
 	Timestamp string  `json:"timestamp"`

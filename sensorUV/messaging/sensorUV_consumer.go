@@ -8,22 +8,18 @@ import (
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"Xilonen-2/core"
-	"Xilonen-2/sensorAire/models"
+	"Xilonen-2/sensorUV/models"
 )
 
 const (
-	UMBRAL_BUENO     = 100.0
-	UMBRAL_MODERADO  = 200.0
-	UMBRAL_PELIGROSO = 300.0
+	UMBRAL_BAJA  = 30.0
+	UMBRAL_MEDIA = 60.0
+	UMBRAL_ALTA  = 80.0
 )
 
-func StartConsumer() {
+func StartUVConsumer() {
 	core.LoadEnv()
-
 	rabbitURL := os.Getenv("RABBITMQ_URL")
-	if rabbitURL == "" {
-		log.Fatal("❌ RABBITMQ_URL no está configurado en las variables de entorno")
-	}
 
 	conn, err := amqp.Dial(rabbitURL)
 	if err != nil {
@@ -37,16 +33,12 @@ func StartConsumer() {
 	}
 	defer ch.Close()
 
-	qProcesado, err := ch.QueueDeclare(
-		"aire.procesado", true, false, false, false, nil,
-	)
+	qProcesado, err := ch.QueueDeclare("uv.procesado", true, false, false, false, nil)
 	if err != nil {
-		log.Fatalf("❌ Error al declarar la cola aire.procesado: %v", err)
+		log.Fatalf("❌ Error al declarar la cola uv.procesado: %v", err)
 	}
 
-	msgs, err := ch.Consume(
-		"sensor.aire", "", true, false, false, false, nil,
-	)
+	msgs, err := ch.Consume("sensor.uv", "", true, false, false, false, nil)
 	if err != nil {
 		log.Fatalf("❌ Error al consumir mensajes: %v", err)
 	}
@@ -55,20 +47,20 @@ func StartConsumer() {
 
 	go func() {
 		for msg := range msgs {
-			var sensorData models.CalidadAire
+			var sensorData models.LuzUV
 			if err := json.Unmarshal(msg.Body, &sensorData); err != nil {
 				log.Printf("⚠️ Error al deserializar el mensaje: %v", err)
 				continue
 			}
 
-			categoria := "Bueno"
-			if sensorData.Valor > UMBRAL_PELIGROSO {
-				categoria = "Peligroso"
-			} else if sensorData.Valor > UMBRAL_MODERADO {
-				categoria = "Moderado"
+			categoria := "Normal"
+			if sensorData.Valor < UMBRAL_BAJA {
+				categoria = "Baja"
+			} else if sensorData.Valor > UMBRAL_ALTA {
+				categoria = "Alta"
 			}
 
-			datoProcesado := models.CalidadAireProcesado{
+			datoProcesado := models.LuzUVProcesada{
 				Valor:     sensorData.Valor,
 				Categoria: categoria,
 				Timestamp: time.Now().Format("2006-01-02 15:04:05"),
@@ -80,20 +72,18 @@ func StartConsumer() {
 				continue
 			}
 
-			err = ch.Publish(
-				"", qProcesado.Name, false, false,
-				amqp.Publishing{
-					ContentType: "application/json",
-					Body:        procesadoJSON,
-				})
+			err = ch.Publish("", qProcesado.Name, false, false, amqp.Publishing{
+				ContentType: "application/json",
+				Body:        procesadoJSON,
+			})
 			if err != nil {
 				log.Printf("❌ Error al publicar datos procesados: %v", err)
 			} else {
-				log.Printf("✅ Dato procesado enviado: Valor=%.2f, Categoría=%s", datoProcesado.Valor, datoProcesado.Categoria)
+				log.Printf("✅ Dato procesado (Luz UV) enviado: Valor=%.2f, Categoría=%s", datoProcesado.Valor, datoProcesado.Categoria)
 			}
 		}
 	}()
 
-	log.Println("📡 Esperando datos del sensor MQ-135...")
+	log.Println("📡 Esperando datos del sensor UV...")
 	<-forever
 }
